@@ -1,0 +1,26 @@
+{
+  "editor.tabSize": 2,
+  "editor.formatOnSave": false,
+  "breadcrumbs.enabled": true,
+  "editor.renderControlCharacters": true,
+  "vetur.format.defaultFormatter.html": "prettyhtml",
+  "vetur.format.defaultFormatterOptions": {
+    "js-beautify-html": {
+      "wrap_attributes": "auto"
+    },
+    "prettyhtml": {
+      "printWidth": 200,
+      "singleQuote": false,
+      "wrapAttributes": false,
+      "sortAttributes": false
+    },
+    "prettier": {
+      "semi": false,
+      "singleQuote": true
+    }
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}
+ 
