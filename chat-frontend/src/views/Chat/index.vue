@@ -94,6 +94,7 @@ export default {
   sockets: {
     /* 连接成功后初始化房间信息 */
     connect() {
+      console.log('dsfsdfd')
       this.initLocalStorageConfig();
       this.getRoomInfo();
     },
@@ -107,6 +108,7 @@ export default {
     /* 初始化房间信息、获取音乐详情 */
     async initRoom(data) {
       await this.getHistoryMessage();
+      console.log(data)
       const { room_admin_info, msg, on_line_user_list, room_list } = data;
       this.setRoomAdminInfo(room_admin_info);
       this.updateMusicInfo(data);

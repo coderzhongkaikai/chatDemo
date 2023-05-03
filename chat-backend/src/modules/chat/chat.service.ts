@@ -45,11 +45,12 @@ export class ChatService {
     //获取用户信息列表
     const userInfoList = await this.UserModel.find({
       where: { id: In(userIds) },
-      select: ['id', 'user_nick', 'user_avatar', 'user_role'],
+      select: ['id', 'user_nick', 'user_avatar', 'user_role','user_tags'],
     });
 
     userInfoList.forEach((t: any) => (t.user_id = t.id));
-
+    console.log('socket  userinfo')
+    console.log(userInfoList)
     /* 相关联的引用消息的信息 */
     const messageInfoList = await this.MessageModel.find({
       where: { id: In(quoteMessageIds) },

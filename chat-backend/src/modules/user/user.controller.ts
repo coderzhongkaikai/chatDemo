@@ -33,4 +33,9 @@ export class UserController {
   update(@Request() req, @Body() params) {
     return this.userService.update(req.payload, params);
   }
+  @Post('/relation')
+  relation(@Query() req, @Body() params) {
+    return this.userService.relation(req.payload, params);
+  }
+  
 }

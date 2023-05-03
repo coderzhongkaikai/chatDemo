@@ -1,12 +1,19 @@
 <template>
     <div class="queue">
-        <div v-if="!on_line_user_list.length" class="empty">
+        <div v-if="!relationUserList.length" class="empty">
             <icon name="choose-music-empty" scale="16" class="icon" />
             <span class="tips">暂时没有发现和你相似的人</span>
         </div>
         <div v-else class="queue-content">
+            <el-dialog title="更改房间提醒" :visible.sync="showJoinModal" width="320px" top="35vh" append-to-body>
+			<span>是否退出当前房间并加入新的房间？</span>
+			<span slot="footer" class="dialog-footer">
+				<el-button size="mini" @click="showJoinModal = false">我再想想</el-button>
+				<el-button type="primary" size="mini" @click="handlerConfirm">确认加入</el-button>
+			</span>
+		</el-dialog>
             <div class="online">
-		<div v-for="(item, index) in on_line_user_list" :key="index" :class="['online-item', { current: mine(item.id) }]">
+		<div v-for="(item, index) in relationUserList" :key="index" :class="['online-item', { current: mine(item.id) }]"	@click="handlerJoinRoom(item.user_room_id)">
 			<img class="online-item-avatar" :src="item && item.user_avatar" />
 			<div class="online-item-info">
 				<div class="online-item-info-name">
@@ -25,9 +32,9 @@
 					{{ item.user_sign }}
 				</div>
 				<div class="online-item-info-desc s-1-line">
-          <el-tag style="margin-left:10px" v-for="item in tag_items" :key="item.index" :type="item.type" size="mini"
-            @click="tagClick(item.index, 'singer')" :effect="item.effect == 0 ? 'plain' : 'dark'">
-            {{ item.label }}
+                    <el-tag style="margin-left:10px" v-for="(item,idx) in item.user_tags" :key="idx"  size="mini"
+            @click="tagClick(item, 'singer')" :effect="0 == 0 ? 'plain' : 'dark'">
+            {{ idx }}
           </el-tag>
 				</div>
 			</div>
@@ -37,14 +44,14 @@
         </div>
     </div>
 </template>
-
 <script>
-import { collectList, removeCollect } from "@/api/music";
-import { mapGetters } from "vuex";
+import { getRelationUser } from "@/api/user";
+import { mapGetters, mapMutations } from "vuex";
 export default {
     data() {
         return {
-            musicList: ['11'],
+            relationUserList: [],
+            showJoinModal: false,
             tag_items: [
           { type: '', label: '标签一',index:0,effect:0 },
           { type: 'success', label: '标签二',index:1 ,effect:0},
@@ -56,7 +63,7 @@ export default {
     },
     computed: {
         //computed里面全是
-        ...mapGetters(["room_admin_id", "on_line_user_list", "mine_id"]),
+        ...mapGetters(["room_admin_id", "on_line_user_list", "mine_id","room_list", "room_id", "mine_room_id"]),
         roleBgColor() {
         return (type) => {
             const map = { 1: "#701ec9", 2: "#000" };
@@ -69,28 +76,72 @@ export default {
     },
     watch: {},
     created() {
-        this.queryCollectMusic();
+        // this.queryCollectMusic();
     },
-    mounted() { },
-    methods: {
-        async queryCollectMusic() {
-            const res = await collectList();
-            this.musicList = res.data;
-        },
-        chooseMusic(val) {
-            this.$socket.client.emit("chooseMusic", val);
-        },
-        async removeMusic(item) {
-            const { music_mid } = item;
-            if (!music_mid) return;
-            await removeCollect({ music_mid });
-            this.$message.success("移除收藏音乐成功...");
-            this.queryCollectMusic();
-        },
-        tips() {
-            this.$toast.info("正在加班加点开发ing");
-        },
+    mounted() {
+        console.log('relation create')
+        this.getRelationList()
+     },
+  methods: {
+    ...mapMutations(["setRoomId"]),
+    async getRelationList() {
+        console.log(this.mine_id)
+        const res = await getRelationUser({user_id:this.mine_id});
+        console.log(res)
+        this.relationUserList=res.data.data
     },
+    handlerJoinRoom(room_id) {
+    //   const { room_id, room_need_password } = room;
+    console.log(room_id)
+    if(!room_id){
+        return this.$message.warning("该用户还没有创建房间");
+    }
+      if (Number(room_id) === Number(this.room_id)) {
+        return this.$message.warning("已经在当前房间了");
+      }
+    //   if (room_need_password === 2) {
+    //     return this.$message.warning("当前房间已加密，禁止加入房间！");
+    //     // TODO 密码房间输入密码进入
+    //     // this.showJoinModal = false
+    //     // this.showPasswordModal = true
+    //   }
+      this.activeRoomId = Number(room_id);
+      this.showJoinModal = true;
+    //   this.handlerConfirm()
+    },
+
+    /* 确定加入其他房间 */
+    handlerConfirm() {
+      this.$message.info("房间跳转稍等！");
+      this.setRoomId(Number(this.activeRoomId));
+      this.$emit("close");
+    },
+
+    /* 加入密码房间 */
+    handlerJoinPasswordRoom() {},
+
+    /* 没有房间的时候运行创建一个房间 */
+    async createRoom(formName) {
+      this.$refs[formName].validate(async (valid) => {
+        if (!valid) return;
+        const { success } = await createRoom(this.ruleform);
+        success && this.$emit("create-success");
+      });
+    },
+
+    handleAvatarSuccess(res, file) {
+      this.ruleform.room_logo = res.data[0].url;
+      this.preImage = URL.createObjectURL(file.raw);
+    },
+    beforeAvatarUpload(file) {
+      const isLt2M = file.size / 1024 / 1024 < 1;
+      if (!isLt2M) {
+        this.$message.error("上传头像图片大小不能超过 1MB!");
+      }
+      return isLt2M;
+    },
+  },
+ 
 };
 </script>
 <style lang="less" scoped>

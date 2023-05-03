@@ -7,6 +7,7 @@ export default {
 	async getUserInfo({ commit }) {
 		return new Promise(resolve => {
 			getInfo().then(res => {
+				console.log(res)
 				const { user_info } = res.data;
 				commit('setUserInfo', user_info);
 				resolve(true);

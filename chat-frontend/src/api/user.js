@@ -7,3 +7,5 @@ export const login = data => request('post', '/user/login', data);
 export const getInfo = data => request('get', '/user/getInfo', data);
 
 export const updateUserInfo = data => request('post', '/user/update', data);
+
+export const getRelationUser = data => request('post', '/user/relation', data);

@@ -20,9 +20,9 @@
 					{{ item.user_sign }}
 				</div>
 				<div class="online-item-info-desc s-1-line">
-          <el-tag style="margin-left:10px" v-for="item in tag_items" :key="item.index" :type="item.type" size="mini"
-            @click="tagClick(item.index, 'singer')" :effect="item.effect == 0 ? 'plain' : 'dark'">
-            {{ item.label }}
+          <el-tag style="margin-left:10px" v-for="item in item.user_tags" :key="item" :type="item" size="mini"
+            @click="tagClick(item, 'singer')" :effect="0 == 0 ? 'plain' : 'dark'">
+            {{ item }}
           </el-tag>
 				</div>
 			</div>

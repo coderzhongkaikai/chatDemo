@@ -14,6 +14,7 @@ export default {
 	},
 
 	setUserInfo(state, user_info) {
+		console.log(user_info)
 		state.user_info = user_info;
 	},
 
@@ -29,6 +30,8 @@ export default {
 
 	/* 房间在线用户列表 */
 	setOnlineUserList(state, on_line_user_list) {
+		console.log(state)
+		console.log(on_line_user_list)
 		state.on_line_user_list = on_line_user_list;
 	},
 

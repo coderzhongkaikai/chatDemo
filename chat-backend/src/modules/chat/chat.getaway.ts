@@ -8,7 +8,8 @@ import { Repository } from 'typeorm';
 import { getRandomId } from '../../constant/avatar';
 import { getMusicDetail, getMusciSrc } from 'src/utils/spider';
 import { getTimeSpace } from 'src/utils/tools';
-
+const jieba = require('@node-rs/jieba');
+// import {nodejieba} from 'nodejieba'
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -130,6 +131,45 @@ export class WsChatGateway {
       quote_user_id,
       quote_message_id,
     };
+    //分析消息的字段
+    console.log(message_content)
+    const text =message_content;
+    //标签
+    const keywords = ['周杰伦', '孙燕姿', '许嵩', '林俊杰', '华晨宇', '薛之谦', '蔡健雅', '林宥嘉', '林俊杰', 'beyonce', '莫扎特', '周深', '蔡依林', '张学友', 'eason', '张惠妹', '蔡依林', '朴树', '潘玮柏', '邓丽君', '张学友', '刘德华', '黎明', '郭富城', '梅艳芳', '陈慧娴', '林忆莲', '陈奕迅', '杨丞琳', '金海心', '庾澄庆', '林子祥', '罗大佑', '张宇',"华语流行", "流行歌曲", "摇滚", "经典老歌", "民谣", "电子舞曲", "古典音乐", "爵士乐", "交响音乐", "古筝", "rap", "钢琴曲", "古典音乐", "爵士乐", "电子音乐", "欧美音乐", "摇滚乐", "民谣", "纯音乐", "r&b"];
+
+    let relatedkeywords = [];
+    
+    // 将文本分词
+    const words = jieba.cut(text);
+    
+    // 遍历每个分词，查找是否包含目标关键词
+    words.forEach(word => {
+      if (keywords.includes(word)) {
+        // 将匹配到的关键词存入数组
+        relatedkeywords.push(word);
+      }
+    });
+    
+    console.log(relatedkeywords); 
+
+    let  temp_user = await this.UserModel.findOne({ id: user_id });
+    const {
+      user_tags,
+    } = temp_user;
+    for(let i=0;i<relatedkeywords.length;i++){
+      let key=relatedkeywords[i]
+      if (user_tags.hasOwnProperty(key)) {
+        user_tags[key] += 1;
+      } else {
+        user_tags[key] = 1;
+      }
+    }
+   console.log(user_tags)
+    // const update_user_tags={}
+    //更新用户user_tags
+    await this.UserModel.update({ id:user_id }, { user_tags: user_tags });
+
+
     //保存消息数据
     const message = await this.MessageModel.save(params);
 
@@ -470,8 +510,15 @@ export class WsChatGateway {
         user_avatar,
         user_sign,
         user_room_bg,
+        user_room_id,
+        user_tags,
         id,
       } = u;
+      // 将对象转换为数组并按值进行排序
+      const sort_user_tags = Object.entries(user_tags).sort((a, b) => b[1] - a[1]);
+      // 取前两个元素的键名
+      const show_user_tags = sort_user_tags.slice(0, 2).map(item => item[0]);
+
       const userInfo = {
         user_name,
         user_nick,
@@ -481,7 +528,9 @@ export class WsChatGateway {
         user_sign,
         user_room_bg,
         user_sex,
+        room_id:user_room_id,
         id,
+        user_tags:show_user_tags,
       };
       if (!u) {
         client.emit('authFail', { code: -1, msg: '无此用户信息、非法操作！' });
